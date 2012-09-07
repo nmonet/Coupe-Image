@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Drawing;
+using System.Drawing.Imaging;
 
 namespace CoupeImage
 {
@@ -14,6 +15,7 @@ namespace CoupeImage
             {
                 string fileName = "";
                 int possibiliteChoisi = -1;
+                int quality = 74;
 
                 if (args.Length >= 1)
                 {
@@ -22,6 +24,10 @@ namespace CoupeImage
                 if (args.Length >= 2)
                 {
                     possibiliteChoisi = Convert.ToInt32(args[1]);
+                }
+                if (args.Length >= 3)
+                {
+                    quality = Convert.ToInt32(args[2]);
                 }
 
                 Console.Out.Write("Chargement de l'image ...");
@@ -45,7 +51,8 @@ namespace CoupeImage
 
                         Image dest = CropImage(src, area);
 
-                        dest.Save(System.IO.Path.GetFileNameWithoutExtension(fileName) + "_" + (i + 1) + System.IO.Path.GetExtension(fileName));
+                        //dest.Save(System.IO.Path.GetFileNameWithoutExtension(fileName) + "_" + (i + 1) + System.IO.Path.GetExtension(fileName));
+                        SaveJpeg(System.IO.Path.GetFileNameWithoutExtension(fileName) + "_" + (i + 1) + System.IO.Path.GetExtension(fileName), dest, quality);
                     }
                 }
                 else
@@ -82,5 +89,44 @@ namespace CoupeImage
             Bitmap bmpCrop = bmpImage.Clone(cropArea, bmpImage.PixelFormat);
             return bmpCrop;
         }
+
+        /// <summary> 
+        /// Saves an image as a jpeg image, with the given quality 
+        /// </summary> 
+        /// <param name="path">Path to which the image would be saved.</param> 
+        // <param name="quality">An integer from 0 to 100, with 100 being the 
+        /// highest quality</param> 
+        public static void SaveJpeg(string path, Image img, int quality)
+        {
+            if (quality < 0 || quality > 100)
+                throw new ArgumentOutOfRangeException("quality must be between 0 and 100.");
+
+
+            // Encoder parameter for image quality 
+            EncoderParameter qualityParam =
+                new EncoderParameter(System.Drawing.Imaging.Encoder.Quality, quality);
+            // Jpeg image codec 
+            ImageCodecInfo jpegCodec = GetEncoderInfo("image/jpeg");
+
+            EncoderParameters encoderParams = new EncoderParameters(1);
+            encoderParams.Param[0] = qualityParam;
+
+            img.Save(path, jpegCodec, encoderParams);
+        }
+
+        /// <summary> 
+        /// Returns the image codec with the given mime type 
+        /// </summary> 
+        private static ImageCodecInfo GetEncoderInfo(string mimeType)
+        {
+            // Get image codecs for all image formats 
+            ImageCodecInfo[] codecs = ImageCodecInfo.GetImageEncoders();
+
+            // Find the correct image codec 
+            for (int i = 0; i < codecs.Length; i++)
+                if (codecs[i].MimeType == mimeType)
+                    return codecs[i];
+            return null;
+        } 
     }
 }
